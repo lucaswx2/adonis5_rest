@@ -1,7 +1,5 @@
 import Post from 'App/Models/Post'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
-import { RequestContract } from '@ioc:Adonis/Core/Request'
-import { rules, schema } from '@ioc:Adonis/Core/Validator'
 
 export default class PostsController {
   public async index () {
@@ -10,12 +8,13 @@ export default class PostsController {
   }
 
   public async store ({ request }: HttpContextContract) {
-    const data = await this.validatePost(request)
+    const data = await Post.validatePost(request)
 
     const post = new Post()
 
     post.title = data.title
     post.content = data.content
+    post.tags = data.tags
 
     await post.save()
     return post
@@ -29,7 +28,7 @@ export default class PostsController {
   public async update ({ params, request }: HttpContextContract) {
     const post = await Post.findOrFail(params.id)
 
-    const data = await this.validatePost(request)
+    const data = await Post.validatePost(request)
 
     post.title = data.title
     await post.save()
@@ -40,28 +39,5 @@ export default class PostsController {
   public async destroy ({ params }: HttpContextContract) {
     const post = await Post.findOrFail(params.id)
     post.delete()
-  }
-
-  public async validatePost (request: RequestContract) {
-    const postSchema = schema.create({
-      title: schema.string(
-        {
-          escape: true,
-          trim: true,
-        },
-        [rules.required()]
-      ),
-      content: schema.string(
-        {
-          escape: true,
-        },
-        [rules.required()]
-      ),
-    })
-
-    return await request.validate({
-      schema: postSchema,
-      cacheKey: request.url(),
-    })
   }
 }

@@ -1,5 +1,7 @@
 import { DateTime } from 'luxon'
 import { BaseModel, column } from '@ioc:Adonis/Lucid/Orm'
+import { rules, schema } from '@ioc:Adonis/Core/Validator'
+import { RequestContract } from '@ioc:Adonis/Core/Request'
 
 export default class Post extends BaseModel {
   @column({ isPrimary: true })
@@ -9,6 +11,9 @@ export default class Post extends BaseModel {
   public title:string
 
   @column()
+  public tags:string
+
+  @column()
   public content:string
 
   @column.dateTime({ autoCreate: true })
@@ -16,4 +21,28 @@ export default class Post extends BaseModel {
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   public updatedAt: DateTime
+
+  public static async validatePost (request: RequestContract) {
+    const postSchema = schema.create({
+      title: schema.string(
+        {
+          escape: true,
+          trim: true,
+        },
+        [rules.required()]
+      ),
+      content: schema.string(
+        {
+          escape: true,
+        },
+        [rules.required()]
+      ),
+      tags: schema.string(),
+    })
+
+    return await request.validate({
+      schema: postSchema,
+      cacheKey: request.url(),
+    })
+  }
 }
